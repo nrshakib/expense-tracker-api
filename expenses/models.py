@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.core.validators import MinValueValidator
 
@@ -5,7 +7,7 @@ from django.core.validators import MinValueValidator
 class Expense(models.Model):
     date = models.DateField()
     purpose = models.CharField(max_length=100, blank=True, default="")
-    amount = models.DecimalField(max_digits=7, decimal_places=2, validators=[MinValueValidator(0.00)])
+    amount = models.DecimalField(max_digits=7, decimal_places=2, validators=[MinValueValidator(Decimal(0.01))])
 
     def __str__(self):
         return self.purpose

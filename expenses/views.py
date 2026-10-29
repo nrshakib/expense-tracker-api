@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 from expenses.models import Expense
 from expenses.serializers import ExpenseSerializer
 
-# Create your views here.
 class ExpenseGetView(APIView):
     def get(self, request):
         data = Expense.objects.all()
@@ -33,3 +32,51 @@ class ExpenseCreateView(APIView):
             },
                 status=status.HTTP_201_CREATED,
             )
+
+class ExpenseDetailView(APIView):
+    def get(self, request, id):
+        expense = get_object_or_404(Expense, id = id)
+        serializer = ExpenseSerializer(expense)
+
+        return Response({
+            "message": 'Expense retrieved successfully',
+            "data": serializer.data
+        },
+        status= status.HTTP_200_OK
+    )
+
+    def patch(self, request, id):
+        expense = get_object_or_404(Expense, id = id)
+        serializer = ExpenseSerializer(expense, data = request.data, partial = True)
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({
+            "message": "Expense updated successfully",
+            "data": serializer.data
+        },
+        status=status.HTTP_200_OK
+    )
+
+    def put(self, request, id):
+        expense = get_object_or_404(Expense, id = id)
+        serializer = ExpenseSerializer(expense, data = request.data)
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({
+            "message": "Expense updated successfully",
+            "data": serializer.data
+        },
+        status= status.HTTP_200_OK
+    )
+
+    def delete(self, request, id):
+        expense = get_object_or_404(Expense, id = id)
+        expense.delete()
+
+        return Response({
+            "message": "Expense deleted successfully"},
+            status= status.HTTP_200_OK )
