@@ -27,30 +27,34 @@ A RESTful Expense Tracker API built with **Django** and **Django REST Framework 
 - Manage expenses through Django Admin
 - Validate that the expense amount is at least `0.01`
 - Use a consistent JSON response for update and delete operations
+- [ ] Filter expenses by date
+- [ ] Search expenses by purpose
+- [ ] Filter expenses by minimum or maximum amount
+- [ ] Validation while filterng data based on query parameter
 
 ## Expense Fields
 
 Each expense currently contains the following fields:
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | Integer | Automatically generated unique identifier |
-| `date` | Date | Date of the expense |
-| `purpose` | String | Purpose or description of the expense; optional |
-| `amount` | Decimal | Expense amount; must be at least `0.01` |
+| Field     | Type    | Description                                     |
+| --------- | ------- | ----------------------------------------------- |
+| `id`      | Integer | Automatically generated unique identifier       |
+| `date`    | Date    | Date of the expense                             |
+| `purpose` | String  | Purpose or description of the expense; optional |
+| `amount`  | Decimal | Expense amount; must be at least `0.01`         |
 
 ## API Endpoints
 
 The examples below assume the project is running locally at `http://127.0.0.1:8000/`.
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/expenses/` | Create an expense |
-| `GET` | `/api/expenses/` | Retrieve all expenses |
-| `GET` | `/api/expenses/<id>/` | Retrieve an expense by ID |
-| `PATCH` | `/api/expenses/edit/<id>/` | Partially update an expense |
-| `PUT` | `/api/expenses/update/<id>/` | Fully update an expense |
-| `DELETE` | `/api/expenses/delete/<id>/` | Delete an expense |
+| Method   | Endpoint                     | Description                 |
+| -------- | ---------------------------- | --------------------------- |
+| `POST`   | `/api/expenses/`             | Create an expense           |
+| `GET`    | `/api/expenses/`             | Retrieve all expenses       |
+| `GET`    | `/api/expenses/<id>/`        | Retrieve an expense by ID   |
+| `PATCH`  | `/api/expenses/edit/<id>/`   | Partially update an expense |
+| `PUT`    | `/api/expenses/update/<id>/` | Fully update an expense     |
+| `DELETE` | `/api/expenses/delete/<id>/` | Delete an expense           |
 
 ### Example: Create an Expense
 
@@ -157,9 +161,6 @@ I use **Postman** to test the endpoints.
 
 The following features are planned for future development and are **not yet implemented**:
 
-- [ ] Filter expenses by date
-- [ ] Search expenses by purpose
-- [ ] Filter expenses by minimum or maximum amount
 - [ ] Add pagination for the expense list
 - [ ] Improve response consistency across all endpoints
 - [ ] Add automated API tests

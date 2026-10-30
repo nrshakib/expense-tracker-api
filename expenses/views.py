@@ -1,4 +1,6 @@
-from django.shortcuts import get_object_or_404, render
+from decimal import Decimal, InvalidOperation
+
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,12 +10,56 @@ from expenses.serializers import ExpenseSerializer
 
 class ExpenseGetView(APIView):
     def get(self, request):
-        data = Expense.objects.all()
-        serializer = ExpenseSerializer(data, many= True)
+        expenses = Expense.objects.all()
+
+        # get the search query params from the url
+        date_params = request.query_params.get('date')
+        search_params = request.query_params.get('search')
+        min_amount = request.query_params.get('min_amount')
+
+        # if date params exist, filter expenses based on query set, else no filtering
+        if date_params:
+            expenses = expenses.filter(date=date_params)
+
+        # if search_params exist, filter the date filtered data using search params,
+        # if date_params doesn't exist, filter main data using search_params, else no filtering
+        if search_params:
+            expenses = expenses.filter(purpose__icontains = search_params)
+
+        
+        if min_amount:
+            try:
+                # if min_amount exists, Convert the query parameter to Decimal.
+                # InvalidOperation will be raised if the value is invalid.
+                min_amount_decimal = Decimal(min_amount)
+
+                # negative value validation
+                if min_amount_decimal >= 0:
+                    expenses = expenses.filter(amount__gte = min_amount_decimal)
+                else:
+                    return Response({
+                                "message": "Amount must be a non-negative number",
+                                "status_text": "error",
+                                "data": None
+                            },
+                                status=status.HTTP_400_BAD_REQUEST
+                        ) 
+
+            except InvalidOperation:
+                return Response({
+                    "message": "Invalid amount",
+                    "status_text": "error",
+                    "data": None
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = ExpenseSerializer(expenses, many= True)
     
         return Response(
             {
                 "message": 'Data Retrieved Successfully',
+                "status_text": "Success",
                 "data": serializer.data,
             },
             status = status.HTTP_200_OK
