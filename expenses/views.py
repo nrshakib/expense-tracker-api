@@ -2,6 +2,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -9,10 +10,9 @@ from expenses.models import Expense
 from expenses.serializers import ExpenseSerializer
 
 class ExpenseGetView(APIView):
-    def get(self, request):
-        expenses = Expense.objects.all()
+    def get_filtered_expenses(self, request, expenses):
 
-        # get the search query params from the url
+        # get the query params from the url
         date_params = request.query_params.get('date')
         search_params = request.query_params.get('search')
         min_amount = request.query_params.get('min_amount')
@@ -26,33 +26,31 @@ class ExpenseGetView(APIView):
         if search_params:
             expenses = expenses.filter(purpose__icontains = search_params)
 
-        
         if min_amount:
             try:
                 # if min_amount exists, Convert the query parameter to Decimal.
-                # InvalidOperation will be raised if the value is invalid.
                 min_amount_decimal = Decimal(min_amount)
 
-                # negative value validation
-                if min_amount_decimal >= 0:
-                    expenses = expenses.filter(amount__gte = min_amount_decimal)
-                else:
-                    return Response({
-                                "message": "Amount must be a non-negative number",
-                                "status_text": "error",
-                                "data": None
-                            },
-                                status=status.HTTP_400_BAD_REQUEST
-                        ) 
-
+            # InvalidOperation will be raised if the value is invalid.
             except InvalidOperation:
-                return Response({
-                    "message": "Invalid amount",
-                    "status_text": "error",
-                    "data": None
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                raise ValidationError({
+                    "min_amount": "Invalid amount"
+                })
+        
+            # negative value validation
+            if min_amount_decimal < 0:
+                raise ValidationError({
+                    "min_amount": "Amount must be a non-negative number"
+                })
+            else:
+                expenses = expenses.filter(amount__gte = min_amount_decimal)
+  
+        return expenses
+    
+    def get(self, request):
+        expenses = Expense.objects.all()
+
+        expenses = self.get_filtered_expenses(request, expenses)
 
         serializer = ExpenseSerializer(expenses, many= True)
     
