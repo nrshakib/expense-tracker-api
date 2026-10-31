@@ -31,6 +31,7 @@ A RESTful Expense Tracker API built with **Django** and **Django REST Framework 
 - [ ] Search expenses by purpose
 - [ ] Filter expenses by minimum or maximum amount
 - [ ] Validation while filterng data based on query parameter
+- [ ] Ordering or sorting data based on query parameter
 
 ## Expense Fields
 
@@ -161,12 +162,9 @@ I use **Postman** to test the endpoints.
 
 The following features are planned for future development and are **not yet implemented**:
 
-- [ ] Add pagination for the expense list
 - [ ] Improve response consistency across all endpoints
 - [ ] Add automated API tests
 - [ ] Add expense summaries, such as total spending
-- [ ] Configure PostgreSQL
-- [ ] Add authentication so each user can manage their own expenses
 
 ## Learning Goals
 

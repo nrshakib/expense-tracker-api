@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from django.shortcuts import get_object_or_404
@@ -19,7 +20,14 @@ class ExpenseGetView(APIView):
 
         # if date params exist, filter expenses based on query set, else no filtering
         if date_params:
-            expenses = expenses.filter(date=date_params)
+            try:
+                datetime.strptime(date_params, '%Y-%m-%d')
+                expenses = expenses.filter(date=date_params)
+
+            except ValueError:
+                 raise ValidationError({
+                     "date": "Invalid date format. Use YYYY-MM-DD."
+                    })
 
         # if search_params exist, filter the date filtered data using search params,
         # if date_params doesn't exist, filter main data using search_params, else no filtering
@@ -51,8 +59,13 @@ class ExpenseGetView(APIView):
         ordering = request.query_params.get('ordering')
         allowed_fields = ['date', '-date', 'amount', '-amount', 'purpose', '-purpose']
 
-        if ordering in allowed_fields:
-            expenses = expenses.order_by(ordering)
+        if ordering:
+            if ordering in allowed_fields:
+                expenses = expenses.order_by(ordering)
+            else:
+                raise ValidationError({
+                    "ordering": "Invalid ordering value. Use date, -date, amount, -amount, purpose or -purpose."
+                })
 
         return expenses
     
