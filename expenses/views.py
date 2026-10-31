@@ -46,11 +46,21 @@ class ExpenseGetView(APIView):
                 expenses = expenses.filter(amount__gte = min_amount_decimal)
   
         return expenses
+
+    def get_ordered_expenses(self, request, expenses):
+        ordering = request.query_params.get('ordering')
+        allowed_fields = ['date', '-date', 'amount', '-amount', 'purpose', '-purpose']
+
+        if ordering in allowed_fields:
+            expenses = expenses.order_by(ordering)
+
+        return expenses
     
     def get(self, request):
         expenses = Expense.objects.all()
 
         expenses = self.get_filtered_expenses(request, expenses)
+        expenses = self.get_ordered_expenses(request, expenses)
 
         serializer = ExpenseSerializer(expenses, many= True)
     
