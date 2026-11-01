@@ -1,184 +1,266 @@
+
 # Expense Tracker API
 
-A RESTful Expense Tracker API built with **Django** and **Django REST Framework (DRF)**. This project is part of my backend development learning journey, where I am practicing API development, CRUD operations, serializers, request validation, and HTTP responses.
+A RESTful Expense Tracker API built with Django and Django REST Framework. This project allows users to manage expenses, filter and search records, analyze spending statistics, and generate expense reports based on date ranges.
 
-## Project Status
+## Features
 
-**Current status:** Basic CRUD operations implemented. Filtering, searching, and additional improvements are planned.
+### 1. Expense Management (CRUD)
+- Create a new expense.
+- Retrieve all expenses.
+- Retrieve a single expense by ID.
+- Update an expense using PUT or PATCH.
+- Delete an expense.
+
+### 2. Filtering and Searching
+- Filter expenses by a specific date.
+- Search expenses by purpose (case-insensitive).
+- Filter expenses by minimum amount.
+- Combine multiple filters in a single request.
+
+### 3. Ordering
+- Order expenses by date.
+- Order expenses by amount.
+- Order expenses by purpose.
+- Support both ascending and descending order.
+
+### 4. Expense Statistics
+Retrieve overall expense statistics, including:
+- Total expense amount.
+- Highest expense.
+- Lowest expense.
+- Average expense.
+- Total number of expense records.
+
+### 5. Date-range Expense Report
+Generate an expense report for a specific date range.
+
+The report includes:
+- Total expense amount.
+- Highest expense.
+- Lowest expense.
+- Average expense.
+- Total number of expenses.
+
+Date validation includes:
+- Required date parameters.
+- Valid date format (`YYYY-MM-DD`).
+- Start date cannot be later than end date.
+
+### 6. Data Validation
+- Serializer-based validation.
+- Expense purpose must contain at least 3 characters when provided.
+- Expense amount must be greater than or equal to 0.01.
+- Date and query parameter validation.
+
+### 7. Consistent API Responses
+
+Successful API responses follow a consistent structure:
+
+```json
+{
+    "message": "Data retrieved successfully",
+    "status_text": "Success",
+    "data": {}
+}
+```
 
 ## Technologies Used
 
 - Python
 - Django
 - Django REST Framework
-- SQLite (Django's default database, unless configured otherwise)
-- Postman for API testing
-
-## Implemented Features
-
-- Create a new expense
-- Retrieve all expenses
-- Retrieve a single expense by its ID
-- Partially update an expense using `PATCH`
-- Fully update an expense using `PUT`
-- Delete an expense
-- Validate incoming data through a DRF `ModelSerializer`
-- Use `get_object_or_404()` to return a `404 Not Found` response when an expense does not exist
-- Manage expenses through Django Admin
-- Validate that the expense amount is at least `0.01`
-- Use a consistent JSON response for update and delete operations
-- [ ] Filter expenses by date
-- [ ] Search expenses by purpose
-- [ ] Filter expenses by minimum or maximum amount
-- [ ] Validation while filterng data based on query parameter
-- [ ] Ordering or sorting data based on query parameter
-
-## Expense Fields
-
-Each expense currently contains the following fields:
-
-| Field     | Type    | Description                                     |
-| --------- | ------- | ----------------------------------------------- |
-| `id`      | Integer | Automatically generated unique identifier       |
-| `date`    | Date    | Date of the expense                             |
-| `purpose` | String  | Purpose or description of the expense; optional |
-| `amount`  | Decimal | Expense amount; must be at least `0.01`         |
+- SQLite / Configured Database
+- Django ORM
+- Postman
 
 ## API Endpoints
 
-The examples below assume the project is running locally at `http://127.0.0.1:8000/`.
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/expenses/` | Retrieve all expenses |
+| POST | `/expenses/create/` | Create an expense |
+| GET | `/expenses/<id>/` | Retrieve a single expense |
+| PATCH | `/expenses/edit/<id>/` | Partially update an expense |
+| PUT | `/expenses/update/<id>/` | Fully update an expense |
+| DELETE | `/expenses/delete/<id>/` | Delete an expense |
+| GET | `/expenses/stats/` | Retrieve expense statistics |
+| GET | `/expenses/report/` | Generate a date-range report |
 
-| Method   | Endpoint                     | Description                 |
-| -------- | ---------------------------- | --------------------------- |
-| `POST`   | `/api/expenses/`             | Create an expense           |
-| `GET`    | `/api/expenses/`             | Retrieve all expenses       |
-| `GET`    | `/api/expenses/<id>/`        | Retrieve an expense by ID   |
-| `PATCH`  | `/api/expenses/edit/<id>/`   | Partially update an expense |
-| `PUT`    | `/api/expenses/update/<id>/` | Fully update an expense     |
-| `DELETE` | `/api/expenses/delete/<id>/` | Delete an expense           |
+## Query Parameters
 
-### Example: Create an Expense
-
-**Request**
+### Filter by Date
 
 ```http
-POST /api/expenses/
-Content-Type: application/json
+GET /expenses/?date=2026-10-29
 ```
+
+### Search by Purpose
+
+```http
+GET /expenses/?search=breakfast
+```
+
+### Filter by Minimum Amount
+
+```http
+GET /expenses/?min_amount=100
+```
+
+### Order Expenses
+
+```http
+GET /expenses/?ordering=-amount
+```
+
+Supported ordering values:
+
+- `date`
+- `-date`
+- `amount`
+- `-amount`
+- `purpose`
+- `-purpose`
+
+### Combine Filters and Ordering
+
+```http
+GET /expenses/?date=2026-10-29&min_amount=100&search=food&ordering=-amount
+```
+
+## Expense Statistics
+
+Retrieve overall expense statistics:
+
+```http
+GET /expenses/stats/
+```
+
+Example response:
 
 ```json
 {
-  "date": "2026-10-29",
-  "purpose": "Lunch",
-  "amount": "150.00"
+    "message": "Statistics retrieved successfully",
+    "status_text": "Success",
+    "data": {
+        "total_expense": 350.0,
+        "max_expense": 120.0,
+        "min_expense": 0.0,
+        "avg_expense": 58.3333333333333,
+        "expense_count": 6
+    }
 }
 ```
 
-### Example: Partially Update an Expense
+## Date-range Expense Report
 
-**Request**
-
-```http
-PATCH /api/expenses/1/
-Content-Type: application/json
-```
-
-```json
-{
-  "amount": "200.00"
-}
-```
-
-Because this endpoint uses partial updates, you only need to send the fields you want to change.
-
-### Example: Delete an Expense
+Generate a report between two dates:
 
 ```http
-DELETE /api/expenses/1/
+GET /expenses/report/?start_date=2026-10-27&end_date=2026-10-29
 ```
 
-The current implementation returns a success message after deletion.
+Both dates are required and must follow the `YYYY-MM-DD` format.
 
-## Getting Started
+## Django ORM Concepts Practiced
 
-### 1. Clone the repository
+- `filter()`
+- `exclude()`
+- `get()`
+- `count()`
+- `exists()`
+- `aggregate()`
+- `Sum()`
+- `Max()`
+- `Min()`
+- `Avg()`
+- `Count()`
+- `date__range`
+- `date__gte`
+- `date__lt`
+- `amount__gte`
+- `purpose__icontains`
+
+## Installation and Setup
+
+1. Clone the repository:
 
 ```bash
-git clone <your-repository-url>
-cd <your-project-directory>
+git clone <https://github.com/nrshakib/expense-tracker-api>
 ```
 
-Replace the placeholders with your actual GitHub repository URL and project directory.
-
-### 2. Create and activate a virtual environment
-
-**Windows PowerShell**
-
-```powershell
-py -m venv venv
-.\venv\Scripts\Activate.ps1
-```
-
-### 3. Install dependencies
-
-If you have a `requirements.txt` file:
+2. Navigate to the project directory:
 
 ```bash
-pip install -r requirements.txt
+cd expense-tracker-api
 ```
 
-Otherwise, install the core packages:
+3. Create a virtual environment:
+
+```bash
+python -m venv venv
+```
+
+4. Activate the virtual environment (Windows):
+
+```bash
+venv\Scripts\activate
+```
+
+5. Install dependencies:
 
 ```bash
 pip install django djangorestframework
 ```
 
-### 4. Apply database migrations
+6. Apply migrations:
 
 ```bash
-py manage.py migrate
+python manage.py makemigrations
+python manage.py migrate
 ```
 
-### 5. Start the development server
+7. Start the development server:
 
 ```bash
-py manage.py runserver
+python manage.py runserver
 ```
 
-The API should now be available at `http://127.0.0.1:8000/`.
+The development server will be available at:
 
-> **Note:** These instructions assume your Django project uses `manage.py` and that the URL configuration matches the endpoints documented above. Adjust the commands or paths if your project structure differs.
+```text
+http://127.0.0.1:8000/
+```
 
-## Testing the API
+## Testing
 
-I use **Postman** to test the endpoints.
+API endpoints and query parameters have been manually tested using Postman.
 
-1. Start the Django development server.
-2. Send requests to the endpoints listed above.
-3. Check response data and HTTP status codes.
-4. Test an invalid or non-existent expense ID to verify error handling.
+Test coverage includes:
+- Expense CRUD operations.
+- Serializer validation.
+- Filtering and searching.
+- Ordering.
+- Invalid query parameter handling.
+- Expense statistics.
+- Date-range reports.
+- Date validation and edge cases.
 
-## Planned Features
+## Learning Objectives
 
-The following features are planned for future development and are **not yet implemented**:
+This project was developed as part of a hands-on Django REST Framework learning journey.
 
-- [ ] Improve response consistency across all endpoints
-- [ ] Add automated API tests
-- [ ] Add expense summaries, such as total spending
+The main objectives were:
 
-## Learning Goals
+- Understand APIView and HTTP methods.
+- Implement CRUD operations using serializers.
+- Work with Django ORM queries.
+- Implement filtering, searching, and ordering.
+- Validate query parameters and request data.
+- Perform database aggregation.
+- Generate expense statistics and date-range reports.
+- Test REST API endpoints using Postman.
 
-Through this project, I am practicing:
+---
 
-- Django models and database queries
-- DRF `APIView` and HTTP methods
-- `ModelSerializer` for serialization and validation
-- The difference between reading existing objects and validating incoming data
-- Full and partial updates
-- HTTP status codes and error handling
-- Testing REST APIs with Postman
-- Documenting a project for GitHub
-
-## Contributing
-
-This is a learning project. Suggestions and feedback are welcome.
+**Project Status:** Core Beginner Project Completed.
