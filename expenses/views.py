@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
+from django.db.models import Avg, Count, Max, Min, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -29,7 +30,7 @@ class ExpenseGetView(APIView):
                      "date": "Invalid date format. Use YYYY-MM-DD."
                     })
 
-        # if search_params exist, filter the date filtered data using search params,
+        # if search_params exist, filter the date_filtered_data using search params,
         # if date_params doesn't exist, filter main data using search_params, else no filtering
         if search_params:
             expenses = expenses.filter(purpose__icontains = search_params)
@@ -42,8 +43,12 @@ class ExpenseGetView(APIView):
             # InvalidOperation will be raised if the value is invalid.
             except InvalidOperation:
                 raise ValidationError({
-                    "min_amount": "Invalid amount"
-                })
+                    "message": "Validation failed",
+                    "status_text": "Error",
+                    "data": {
+                        "min_amount": "Invalid amount"
+                        }
+                    })
         
             # negative value validation
             if min_amount_decimal < 0:
@@ -95,6 +100,7 @@ class ExpenseCreateView(APIView):
         return Response(
             {
                 "message": "Expense created Successfully",
+                "status_text": "Success",
                 "data": serializer.data
             },
                 status=status.HTTP_201_CREATED,
@@ -107,6 +113,7 @@ class ExpenseDetailView(APIView):
 
         return Response({
             "message": 'Expense retrieved successfully',
+            "status_text": "Success",
             "data": serializer.data
         },
         status= status.HTTP_200_OK
@@ -121,6 +128,7 @@ class ExpenseDetailView(APIView):
 
         return Response({
             "message": "Expense updated successfully",
+            "status_text": "Success",
             "data": serializer.data
         },
         status=status.HTTP_200_OK
@@ -135,6 +143,7 @@ class ExpenseDetailView(APIView):
 
         return Response({
             "message": "Expense updated successfully",
+            "status_text": "Success",
             "data": serializer.data
         },
         status= status.HTTP_200_OK
@@ -145,5 +154,71 @@ class ExpenseDetailView(APIView):
         expense.delete()
 
         return Response({
-            "message": "Expense deleted successfully"},
+            "message": "Expense deleted successfully",
+            "status_text": "Success",
+            "data": None
+            },
             status= status.HTTP_200_OK )
+
+class ExpenseStatView(APIView):
+    def get(self, request):
+        statistics = Expense.objects.aggregate(
+            total_expense = Sum('amount'),
+            max_expense = Max('amount'),
+            min_expense = Min('amount'),
+            avg_expense = Avg('amount'),
+            expense_count = Count('id')
+        )
+
+        return Response({
+            'message': 'Statistics retrieved successfully',
+            'status_text': 'Success',
+            'data': statistics,
+        },status= status.HTTP_200_OK
+    )
+
+class ExpenseDateReportView(APIView):
+    def get(self, request):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if not start_date or not end_date:
+            raise ValidationError({
+                'message': 'Validation failed',
+                'success_text': 'Error',
+                'data': 'Both start_date and end_date are required.'
+            })
+        
+        try:
+            parsed_start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            parsed_end_date = datetime.strptime(end_date, '%Y-%m-%d')
+        except ValueError:
+            raise ValidationError({
+                'message': 'Validation failed',
+                'data': 'Please provide valid dates.'
+            })
+        
+        if parsed_start_date > parsed_end_date:
+            raise ValidationError({
+                'message': 'Validation failed',
+                'status_text': 'Error',
+                'data': {
+                    'date': 'Start date cannot be greater than end date.'
+                    }
+                })
+
+        expenses = Expense.objects.filter(date__range = [start_date, end_date])
+        stats = expenses.aggregate(
+            total_expense = Sum('amount'),
+            max_expense = Max('amount'),
+            min_expense = Min('amount'),
+            avg_expense = Avg('amount'),
+            expense_count = Count('id'),
+        )
+
+        return Response({
+            'message': 'Filtered data retrieved successfully',
+                        'status_text': 'Success',
+                        'data': stats
+                    }, status = status.HTTP_200_OK
+                )
